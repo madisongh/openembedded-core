@@ -4,6 +4,7 @@ SRC_URI = "git://git.yoctoproject.org/pseudo;branch=oe-core \
            file://0001-configure-Prune-PIE-flags.patch \
            file://fallback-passwd \
            file://fallback-group \
+           file://glibc233.patch \
            "
 
 SRCREV = "8317c0ab172db47dabcef909bae02cd77b1f1010"
