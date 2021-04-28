@@ -1,0 +1,49 @@
+From 1aaf9d481a7c0e20675df165a4968e255521bea8 Mon Sep 17 00:00:00 2001
+From: Trevor Gamblin <trevor.gamblin@windriver.com>
+Date: Wed, 28 Apr 2021 09:25:08 -0400
+Subject: [PATCH] Fix a missing include of <string>
+
+gold/ChangeLog:
+
+2019-06-07  Martin Liska  <mliska@suse.cz>
+
+    * errors.h: Include string.
+
+Upstream-Status: Backport
+(https://github.com/bminor/binutils-gdb/commit/a3972330f)
+
+Signed-off-by: Trevor Gamblin <trevor.gamblin@windriver.com>
+---
+ gold/ChangeLog | 3 +++
+ gold/errors.h  | 1 +
+ 2 files changed, 4 insertions(+)
+
+diff --git a/gold/ChangeLog b/gold/ChangeLog
+index 458bed793e0..00f804b1bf6 100644
+--- a/gold/ChangeLog
++++ b/gold/ChangeLog
+@@ -2,6 +2,9 @@
+ 
+ 	2.32 Release.
+ 
++2019-06-10  Martin Liska  <mliska@suse.cz>
++
++	* errors.h: Include string.
+ 2019-01-21  Nick Clifton  <nickc@redhat.com>
+ 
+ 	* po/uk.po: Updated Ukranian translation.
+diff --git a/gold/errors.h b/gold/errors.h
+index c26b5586379..ac681e965bb 100644
+--- a/gold/errors.h
++++ b/gold/errors.h
+@@ -24,6 +24,7 @@
+ #define GOLD_ERRORS_H
+ 
+ #include <cstdarg>
++#include <string>
+ 
+ #include "gold-threads.h"
+ 
+-- 
+2.30.2
+
