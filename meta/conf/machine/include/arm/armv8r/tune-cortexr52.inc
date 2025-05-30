@@ -18,3 +18,8 @@ AVAILTUNES                             += "cortexr52hf"
 ARMPKGARCH:tune-cortexr52hf             = "cortexr52"
 TUNE_FEATURES:tune-cortexr52hf          = "${TUNE_FEATURES:tune-cortexr52} callconvention-hard"
 PACKAGE_EXTRA_ARCHS:tune-cortexr52hf    = "cortexr52hf"
+
+AVAILTUNES                             += "cortexr52-32"
+ARMPKGARCH:tune-cortexr52-32            = "cortexr52"
+TUNE_FEATURES:tune-cortexr52-32         = "${TUNE_FEATURES:tune-armv8r-crc-simd} cortexr52"
+PACKAGE_EXTRA_ARCHS:tune-cortexr52-32   = "${PACKAGE_EXTRA_ARCHS:tune-armv8r-crc-simd} cortexr52 cortexr52-32"
