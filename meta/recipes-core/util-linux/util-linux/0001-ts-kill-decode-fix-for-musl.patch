@@ -1,0 +1,43 @@
+From e6b6e401b0046a524e2e3e3db66f1b85b06fa2d4 Mon Sep 17 00:00:00 2001
+From: Chen Qi <Qi.Chen@windriver.com>
+Date: Tue, 3 Jun 2025 13:18:36 +0800
+Subject: [PATCH] ts/kill/decode: fix for musl
+
+glibc uses 34 as the value of SIGRTMIN:
+https://sourceware.org/git/?p=glibc.git;a=blob;f=signal/allocrtsig.c;h=8ed8e37dd6c41f94be6eef042ce9db1af1153228;hb=HEAD#l27
+"""
+static int current_rtmin = __SIGRTMIN + RESERVED_SIGRT;
+"""
+
+musl uses 35 as the value of SIGRTMIN:
+https://git.musl-libc.org/cgit/musl/tree/src/signal/sigrtmin.c
+
+Adjust the test case to cope with musl. Otherwise, it fails with
+the following difference:
+
+  -Ignored: HUP QUIT TRAP PIPE ALRM
+  +Ignored: HUP QUIT TRAP PIPE ALRM 34
+
+Upstream-Status: Submitted [https://github.com/util-linux/util-linux/pull/3605]
+
+Signed-off-by: Chen Qi <Qi.Chen@windriver.com>
+---
+ tests/ts/kill/decode | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/tests/ts/kill/decode b/tests/ts/kill/decode
+index 57149899e..f17ea36e2 100755
+--- a/tests/ts/kill/decode
++++ b/tests/ts/kill/decode
+@@ -53,7 +53,7 @@ ACK=
+ 	    # Sending one more USR1 is for making the signal pending state.
+ 	    "$TS_CMD_KILL" -USR1 "$PID"
+ 	    "$TS_CMD_KILL" -d "$PID" | {
+-		if [[ $("$TS_CMD_KILL" --list=34) == RT0 ]]; then
++		if [[ $("$TS_CMD_KILL" --list=34) == RT0 || $("$TS_CMD_KILL" --list=35) == RT0 ]]; then
+ 		    # See man signal(7).
+ 		    #   The  Linux  kernel  supports a range of 33 different real-time signals,
+ 		    #   numbered 32 to 64.  However, the glibc POSIX threads implementation in‐
+-- 
+2.34.1
+
