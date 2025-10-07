@@ -17,6 +17,7 @@ SRC_URI = "${GITHUB_BASE_URI}/download/${PV}/${BP}.tar.xz \
            file://rcS \
            file://bootlogd.init \
            file://01_bootlogd \
+           file://02_x11 \
            "
 SRC_URI[sha256sum] = "c90874b8c054a35991fb8c4d30c443ed1e9b1815ff6165c7b483f558be4e4b53"
 
@@ -104,6 +105,7 @@ do_install () {
 
 	install -d ${D}${sysconfdir}/default/volatiles
 	install -m 0644 ${UNPACKDIR}/01_bootlogd ${D}${sysconfdir}/default/volatiles
+	install -m 0644 ${UNPACKDIR}/02_x11 ${D}${sysconfdir}/default/volatiles
 
 	chown root:shutdown ${D}${base_sbindir}/halt ${D}${base_sbindir}/shutdown
 	chmod o-x,u+s ${D}${base_sbindir}/halt ${D}${base_sbindir}/shutdown
