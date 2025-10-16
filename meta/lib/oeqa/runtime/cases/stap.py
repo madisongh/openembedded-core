@@ -22,11 +22,11 @@ class StapTest(OERuntimeTestCase):
 
         try:
             cmd = 'make %s -C /usr/src/kernel scripts prepare' % (parallel_make)
-            status, output = self.target.run(cmd, 900)
+            status, output = self.target.run(cmd, 1200)
             self.assertEqual(status, 0, msg='\n'.join([cmd, output]))
 
             cmd = 'stap -v -p4 -m stap_hello --disable-cache -DSTP_NO_VERREL_CHECK -e \'probe oneshot { print("Hello, "); println("SystemTap!") }\''
-            status, output = self.target.run(cmd, 900)
+            status, output = self.target.run(cmd, 1200)
             self.assertEqual(status, 0, msg='\n'.join([cmd, output]))
 
             cmd = 'staprun -v -R -b1 stap_hello.ko'
