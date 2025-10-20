@@ -1,0 +1,108 @@
+From 682bdd0126ca039d8df35e8a87485eef522f39fa Mon Sep 17 00:00:00 2001
+From: Hongxu Jia <hongxu.jia@windriver.com>
+Date: Sun, 19 Oct 2025 20:10:42 -0700
+Subject: [PATCH] serial-getty@.service: Allow device to fast fail if it does
+ not exist
+
+Some BSPs use a USB serial port which may or may not actually be
+plugged all the time.  It is quite useful to have a USB serial port
+have a getty running but it does not make sense to wait for it for 90
+seconds before completing the system startup if it might never get
+plugged in.  The typical example is that a USB serial device might
+only need to be plugged in when debugging, upgrading, or initially
+configuring a device.
+
+This change is somewhat subtle.  Systemd uses the "BindsTo" directive
+to ensure existence of the device in order to start the service as
+well as to terminate the service if the device goes away.  The "After"
+directive makes that same relationship stronger.  When used together
+this has the undesired side effect that systemd will wait until its
+internal time out value of 90 seconds for the device to come on line
+before executing a fail operation or letting other tasks and groups
+continue.  This is certainly the kind of behavior we want for a disk,
+but not for serial ports in general.
+
+The "BindsTo" directive is replaced by the combination of the "PartOf"
+and the "ConditionPathExists" directives.  The "After" directive is
+unchanged because that will wait for the udev rules to process.  The
+"PartOf" directive will issue a stop to the getty service if the
+device goes away, similar to the "BindsTo" directive.  The
+"ConditionPathExists" is what allows the service to fail fast vs
+waiting for the timeout.  When a USB device is not plugged in at boot
+you would find a message in the system journal like:
+
+    systemd[1]: Condition check resulted in Serial Getty on \
+                 ttyUSB0 being skipped.
+
+In Yocto project, if you want to observe the problem with qemu, it is
+easy to replicate. Simply add the following line to your local.conf for
+a x86-64 qemu build.
+
+    SERIAL_CONSOLES="115200;ttyS0 115200;ttyUSB0"
+
+Login right after the system boots and observe:
+
+   root@qemux86-64:~# systemd-analyze
+   Bootup is not yet finished (org.freedesktop.systemd1.Manager.FinishTimestampMonotonic=0).
+   Please try again later.
+   Hint: Use 'systemctl list-jobs' to see active jobs
+
+   root@qemux86-64:~# systemctl list-jobs
+   JOB UNIT                         TYPE  STATE
+   96  serial-getty@ttyUSB0.service start waiting
+   97  dev-ttyUSB0.device           start running
+   1   multi-user.target            start waiting
+   88  getty.target                 start waiting
+
+   4 jobs listed.
+
+   root@intel-x86-64:~# systemctl list-jobs
+   No jobs running.
+
+   root@qemux86-64:~# systemd-analyze
+   Startup finished in 1.062s (kernel) + 1min 30.384s (userspace) = 1min 31.447s
+   multi-user.target reached after 1min 30.384s in userspace.
+
+You can see above that the dev-ttyUSB0.device will block for 1min 30
+seconds.  While that might not be a problem for this reference build.
+It is certainly a problem for images that have software watchdogs that
+verify the system booted up all the way to systemd completion in less
+than 90 seconds. After apply this commit:
+
+   root@qemux86-64:~# systemctl list-jobs
+   No jobs running.
+
+   root@qemux86-64:~# systemd-analyze
+   Startup finished in 1.028s (kernel) + 1.593s (userspace) = 2.621s
+   multi-user.target reached after 1.588s in userspace.
+
+This other nice effect of this change is that the fast fail device
+extend to additional serial ports that may not exist on ARM BSPs or
+that might be configured in or out by the dtb files on different
+boards.
+
+Signed-off-by: Jason Wessel <jason.wessel@windriver.com>
+
+Upstream-Status: Submitted [https://github.com/systemd/systemd/pull/39381]
+Signed-off-by: Hongxu Jia <hongxu.jia@windriver.com>
+---
+ units/serial-getty@.service.in | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/units/serial-getty@.service.in b/units/serial-getty@.service.in
+index 8b5a63d681..67534e76d9 100644
+--- a/units/serial-getty@.service.in
++++ b/units/serial-getty@.service.in
+@@ -11,7 +11,8 @@
+ Description=Serial Getty on %I
+ Documentation=man:agetty(8) man:systemd-getty-generator(8)
+ Documentation=https://0pointer.de/blog/projects/serial-console.html
+-BindsTo=dev-%i.device
++PartOf=dev-%i.device
++ConditionPathExists=/dev/%i
+ After=dev-%i.device systemd-user-sessions.service plymouth-quit-wait.service getty-pre.target
+ {% if HAVE_SYSV_COMPAT %}
+ After=rc-local.service
+-- 
+2.49.0
+
