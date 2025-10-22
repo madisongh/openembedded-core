@@ -21,6 +21,8 @@ SRC_URI = "git://gitlab.freedesktop.org/pkg-config/pkg-config.git;branch=master;
 
 inherit autotools
 
+TOOLCHAIN_NATIVE = "gcc"
+
 # Because of a faulty test, the current auto mode always evaluates to no,
 # so just continue that behaviour.
 #
